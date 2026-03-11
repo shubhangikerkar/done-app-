@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="apple-mobile-web-app-title" content="Done."/>
+<meta name="theme-color" content="#0f0f0f"/>
+<meta name="mobile-web-app-capable" content="yes"/>
+<link rel="manifest" href="./manifest.json"/>
+<link rel="apple-touch-icon" href="./icon-192.png"/>
+<title>Done.</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet"/>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f0f0f;
+    --surface: #181818;
+    --border: #2a2a2a;
+    --text: #e8e4de;
+    --muted: #5a5652;
+    --accent: #c8f565;
+    --done-bg: #1a2e0a;
+    --done-border: #3a6012;
+    --done-text: #c8f565;
+    --radius: 16px;
+    --font-display: 'Playfair Display', serif;
+    --font-body: 'DM Sans', sans-serif;
+    --safe-top: env(safe-area-inset-top, 0px);
+    --safe-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  html, body {
+    height: 100%;
+    overscroll-behavior: none;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-body);
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+    -webkit-tap-highlight-color: transparent;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  /* Ambient glow */
+  body::before {
+    content: '';
+    position: fixed;
+    top: -150px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 500px;
+    height: 350px;
+    background: radial-gradient(ellipse, rgba(200,245,101,0.07) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    padding-top: calc(var(--safe-top) + 16px);
+    padding-left: 24px;
+    padding-right: 24px;
+    padding-bottom: 16px;
+    background: rgba(15,15,15,0.85);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+    animation: fadeSlideDown 0.6s ease both;
+  }
+
+  .topbar-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .app-title {
+    font-family: var(--font-display);
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    color: var(--text);
+    line-height: 1;
+  }
+
+  .app-title span { color: var(--accent); }
+
+  .pill-stats {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .pill {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    padding: 4px 12px;
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 400;
+  }
+
+  .pill strong { color: var(--text); font-weight: 500; }
+  .pill.green { border-color: var(--done-border); color: var(--done-text); background: var(--done-bg); }
+
+  /* ── SCROLL AREA ── */
+  .scroll-area {
+    flex: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 24px 20px;
+    padding-bottom: calc(100px + var(--safe-bottom));
+    max-width: 640px;
+    width: 100%;
+    margin: 0 auto;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Progress */
+  .progress-wrap {
+    margin-bottom: 20px;
+    animation: fadeSlideDown 0.6s 0.1s ease both;
+  }
+
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    margin-bottom: 8px;
+  }
+
+  .progress-track {
+    height: 3px;
+    background: var(--border);
+    border-radius: 99px;
+    overflow: hidden;
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #a8d84a, var(--accent));
+    border-radius: 99px;
+    transition: width 0.6s cubic-bezier(0.34,1,0.64,1);
+    box-shadow: 0 0 8px rgba(200,245,101,0.5);
+  }
+
+  /* Section labels */
+  .section-label {
+    font-size: 10px;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-bottom: 10px;
+    margin-top: 20px;
+    padding-left: 4px;
+  }
+
+  /* Task list */
+  .task-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* Task */
+  .task {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 16px 16px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    cursor: pointer;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.35s, background 0.35s, box-shadow 0.35s;
+    animation: taskEnter 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+  }
+
+  .task.done {
+    background: var(--done-bg);
+    border-color: var(--done-border);
+    box-shadow: 0 0 0 1px rgba(200,245,101,0.06), 0 4px 20px rgba(200,245,101,0.06);
+  }
+
+  /* Ripple */
+  .ripple {
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(200,245,101,0.18);
+    transform: scale(0);
+    animation: rippleAnim 0.55s linear;
+    pointer-events: none;
+  }
+
+  @keyframes rippleAnim { to { transform: scale(4); opacity: 0; } }
+
+  /* Checkbox */
+  .check-wrap {
+    flex-shrink: 0;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 2px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.3s, background 0.3s;
+    pointer-events: none;
+  }
+
+  .task.done .check-wrap {
+    border-color: var(--accent);
+    background: var(--accent);
+  }
+
+  .check-icon {
+    opacity: 0;
+    transform: scale(0) rotate(-20deg);
+    transition: opacity 0.25s 0.05s, transform 0.25s 0.05s cubic-bezier(0.34,1.56,0.64,1);
+    color: #0f0f0f;
+    font-size: 13px;
+    font-weight: 800;
+    pointer-events: none;
+    line-height: 1;
+  }
+
+  .task.done .check-icon { opacity: 1; transform: scale(1) rotate(0); }
+
+  /* Text */
+  .task-text {
+    flex: 1;
+    font-size: 15px;
+    font-weight: 400;
+    color: var(--text);
+    line-height: 1.45;
+    word-break: break-word;
+    min-width: 0;
+    text-decoration: line-through transparent;
+    text-decoration-thickness: 1px;
+    transition: color 0.35s, text-decoration-color 0.35s;
+  }
+
+  .task.done .task-text {
+    color: var(--done-text);
+    text-decoration-color: var(--done-text);
+  }
+
+  /* Swipe actions shown on press-hold (mobile) */
+  .task-actions {
+    display: flex;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .action-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--muted);
+    font-size: 15px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .action-btn:active { opacity: 0.7; }
+  .action-btn.delete { color: #c05050; border-color: #3a1a1a; background: #1e0a0a; }
+
+  /* Inline edit */
+  .task-edit {
+    flex: 1;
+    background: transparent;
+    border: none;
+    border-bottom: 1.5px solid var(--accent);
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-weight: 400;
+    outline: none;
+    padding: 2px 0;
+    min-width: 0;
+    caret-color: var(--accent);
+  }
+
+  /* Empty */
+  .empty {
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+    font-size: 14px;
+    font-style: italic;
+    animation: fadeSlideDown 0.4s ease both;
+  }
+
+  .empty-icon {
+    font-size: 42px;
+    display: block;
+    margin-bottom: 14px;
+    filter: grayscale(1) opacity(0.35);
+  }
+
+  /* ── BOTTOM ADD BAR ── */
+  .add-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0; right: 0;
+    z-index: 200;
+    padding: 14px 20px;
+    padding-bottom: calc(14px + var(--safe-bottom));
+    background: rgba(15,15,15,0.92);
+    backdrop-filter: blur(24px);
+    -webkit-backdrop-filter: blur(24px);
+    border-top: 1px solid var(--border);
+    animation: slideUp 0.5s 0.2s ease both;
+  }
+
+  .add-inner {
+    display: flex;
+    gap: 10px;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  .add-input {
+    flex: 1;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 13px 16px;
+    color: var(--text);
+    font-family: var(--font-body);
+    font-size: 15px;
+    font-weight: 300;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .add-input::placeholder { color: var(--muted); }
+
+  .add-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(200,245,101,0.09);
+  }
+
+  .add-btn {
+    background: var(--accent);
+    color: #0f0f0f;
+    border: none;
+    border-radius: 12px;
+    width: 48px;
+    height: 48px;
+    font-size: 24px;
+    font-weight: 700;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.15s, box-shadow 0.15s;
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .add-btn:active { transform: scale(0.94); }
+
+  /* Install banner */
+  .install-banner {
+    background: var(--done-bg);
+    border: 1px solid var(--done-border);
+    border-radius: var(--radius);
+    padding: 14px 16px;
+    margin-bottom: 20px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    animation: fadeSlideDown 0.5s ease both;
+  }
+
+  .install-banner-text {
+    flex: 1;
+    font-size: 13px;
+    color: var(--done-text);
+    line-height: 1.4;
+  }
+
+  .install-banner-text strong { display: block; margin-bottom: 2px; font-size: 14px; }
+
+  .install-btn-pwa {
+    background: var(--accent);
+    color: #0f0f0f;
+    border: none;
+    border-radius: 8px;
+    padding: 8px 14px;
+    font-family: var(--font-body);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    flex-shrink: 0;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .dismiss-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    font-size: 18px;
+    cursor: pointer;
+    padding: 0 4px;
+    flex-shrink: 0;
+  }
+
+  /* Burst */
+  .burst { position: fixed; pointer-events: none; z-index: 9999; }
+  .burst-dot {
+    position: absolute;
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    transform: translate(-50%,-50%);
+    animation: burstFly var(--d,0.6s) ease forwards;
+  }
+
+  @keyframes burstFly {
+    0%   { transform: translate(-50%,-50%) scale(1); opacity: 1; }
+    100% { transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(0); opacity: 0; }
+  }
+
+  /* Animations */
+  @keyframes fadeSlideDown {
+    from { opacity: 0; transform: translateY(-12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  @keyframes taskEnter {
+    from { opacity: 0; transform: translateY(16px) scale(0.97); }
+    to   { opacity: 1; transform: translateY(0) scale(1); }
+  }
+
+  @keyframes taskExit {
+    to { opacity: 0; transform: translateX(30px) scale(0.95); max-height: 0; padding: 0; margin: 0; border: none; }
+  }
+
+  .task.removing {
+    animation: taskExit 0.3s ease forwards;
+    pointer-events: none;
+    overflow: hidden;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar { width: 0; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div class="topbar-inner">
+    <div class="app-title">Get it <span>done.</span></div>
+    <div class="pill-stats" id="pillStats" style="display:none">
+      <div class="pill"><strong id="pTotal">0</strong> tasks</div>
+      <div class="pill green"><strong id="pDone">0</strong> done</div>
+    </div>
+  </div>
+</div>
+
+<!-- SCROLL AREA -->
+<div class="scroll-area">
+
+  <!-- Install banner (shown if installable) -->
+  <div class="install-banner" id="installBanner" style="display:none">
+    <div style="font-size:22px">📲</div>
+    <div class="install-banner-text">
+      <strong>Add to Home Screen</strong>
+      Install this app for quick access anytime
+    </div>
+    <button class="install-btn-pwa" id="installBtn">Install</button>
+    <button class="dismiss-btn" id="dismissBanner">✕</button>
+  </div>
+
+  <!-- iOS instructions (shown on iOS Safari) -->
+  <div class="install-banner" id="iosBanner" style="display:none">
+    <div style="font-size:22px">🍎</div>
+    <div class="install-banner-text">
+      <strong>Add to Home Screen</strong>
+      Tap the share button <strong>⎙</strong> then "Add to Home Screen"
+    </div>
+    <button class="dismiss-btn" id="dismissIos">✕</button>
+  </div>
+
+  <!-- Progress bar -->
+  <div class="progress-wrap" id="progressWrap" style="display:none">
+    <div class="progress-label">
+      <span>Today's progress</span>
+      <span id="progressPct">0%</span>
+    </div>
+    <div class="progress-track">
+      <div class="progress-fill" id="progressFill" style="width:0%"></div>
+    </div>
+  </div>
+
+  <!-- Pending tasks -->
+  <div id="pendingSection">
+    <div class="section-label" id="pendingLabel" style="display:none">To Do</div>
+    <div class="task-list" id="pendingList"></div>
+  </div>
+
+  <!-- Done tasks -->
+  <div id="doneSection" style="display:none">
+    <div class="section-label">Completed</div>
+    <div class="task-list" id="doneList"></div>
+  </div>
+
+</div>
+
+<!-- BOTTOM ADD BAR -->
+<div class="add-bar">
+  <div class="add-inner">
+    <input class="add-input" id="addInput" placeholder="Add a task…" maxlength="200" autocomplete="off" autocorrect="on" autocapitalize="sentences"/>
+    <button class="add-btn" id="addBtn">+</button>
+  </div>
+</div>
+
+<script>
+// ─── State ────────────────────────────────────────────────────────────────────
+let tasks = [];
+try { tasks = JSON.parse(localStorage.getItem('done-tasks') || '[]'); } catch(e){}
+if (!tasks.length) {
+  tasks = [
+    { id: uid(), text: 'Review morning emails 📬', done: false },
+    { id: uid(), text: 'Finish the project proposal', done: false },
+    { id: uid(), text: 'Take a lunch break 🥗', done: true },
+  ];
+  save();
+}
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+function save() { try { localStorage.setItem('done-tasks', JSON.stringify(tasks)); } catch(e){} }
+
+// ─── DOM refs ─────────────────────────────────────────────────────────────────
+const addInput    = document.getElementById('addInput');
+const addBtn      = document.getElementById('addBtn');
+const progressWrap= document.getElementById('progressWrap');
+const progressFill= document.getElementById('progressFill');
+const progressPct = document.getElementById('progressPct');
+const pillStats   = document.getElementById('pillStats');
+const pTotal      = document.getElementById('pTotal');
+const pDone       = document.getElementById('pDone');
+const pendingList = document.getElementById('pendingList');
+const doneList    = document.getElementById('doneList');
+const doneSection = document.getElementById('doneSection');
+const pendingLabel= document.getElementById('pendingLabel');
+
+// ─── Render ───────────────────────────────────────────────────────────────────
+function render() {
+  const total   = tasks.length;
+  const doneArr = tasks.filter(t=>t.done);
+  const pending = tasks.filter(t=>!t.done);
+  const pct     = total ? Math.round((doneArr.length/total)*100) : 0;
+
+  progressWrap.style.display = total ? '' : 'none';
+  pillStats.style.display    = total ? '' : 'none';
+  progressFill.style.width   = pct + '%';
+  progressPct.textContent    = pct + '%';
+  pTotal.textContent = total;
+  pDone.textContent  = doneArr.length;
+
+  pendingLabel.style.display = (pending.length && doneArr.length) ? '' : 'none';
+  doneSection.style.display  = doneArr.length ? '' : 'none';
+
+  renderList(pendingList, pending);
+  renderList(doneList, doneArr);
+
+  if (!total) {
+    pendingList.innerHTML = `<div class="empty"><span class="empty-icon">✦</span>All clear — add something below!</div>`;
+  }
+}
+
+function renderList(container, arr) {
+  const existing = new Map([...container.querySelectorAll('.task')].map(el=>[el.dataset.id, el]));
+
+  arr.forEach((t, i) => {
+    let el = existing.get(t.id);
+    if (!el) {
+      el = buildTask(t);
+      el.style.animationDelay = (i * 0.04) + 's';
+      container.appendChild(el);
+    } else {
+      el.classList.toggle('done', t.done);
+      const textEl = el.querySelector('.task-text');
+      if (textEl) textEl.textContent = t.text;
+      existing.delete(t.id);
+    }
+  });
+
+  // Remove stale
+  existing.forEach(el => {
+    el.classList.add('removing');
+    el.addEventListener('animationend', ()=>el.remove(), {once:true});
+  });
+
+  // Re-order
+  arr.forEach(t => {
+    const el = container.querySelector(`[data-id="${t.id}"]`);
+    if (el) container.appendChild(el);
+  });
+}
+
+function buildTask(t) {
+  const el = document.createElement('div');
+  el.className = 'task' + (t.done ? ' done' : '');
+  el.dataset.id = t.id;
+  el.innerHTML = `
+    <div class="check-wrap"><span class="check-icon">✓</span></div>
+    <span class="task-text">${esc(t.text)}</span>
+    <div class="task-actions">
+      <button class="action-btn edit-btn" title="Edit">✎</button>
+      <button class="action-btn delete delete-btn" title="Delete">✕</button>
+    </div>`;
+
+  // Toggle on tap (not on buttons)
+  el.addEventListener('click', e => {
+    if (e.target.closest('.task-actions') || e.target.tagName === 'INPUT') return;
+    toggleDone(t.id, e, el);
+  });
+
+  el.querySelector('.edit-btn').addEventListener('click', e => {
+    e.stopPropagation();
+    startEdit(t.id, el);
+  });
+
+  el.querySelector('.delete-btn').addEventListener('click', e => {
+    e.stopPropagation();
+    el.classList.add('removing');
+    el.addEventListener('animationend', () => {
+      tasks = tasks.filter(x => x.id !== t.id);
+      save(); render();
+    }, {once:true});
+  });
+
+  return el;
+}
+
+function toggleDone(id, e, el) {
+  const task = tasks.find(t=>t.id===id);
+  if (!task) return;
+  task.done = !task.done;
+  save();
+
+  // Ripple
+  const rect = el.getBoundingClientRect();
+  const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+  const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+  const rip  = document.createElement('span');
+  rip.className = 'ripple';
+  const size = Math.max(rect.width, rect.height) * 1.5;
+  rip.style.cssText = `width:${size}px;height:${size}px;left:${clientX-rect.left-size/2}px;top:${clientY-rect.top-size/2}px`;
+  el.appendChild(rip);
+  rip.addEventListener('animationend', ()=>rip.remove());
+
+  if (task.done) burst(clientX, clientY);
+
+  // Haptic if available
+  if (navigator.vibrate) navigator.vibrate(task.done ? [8, 40, 8] : 5);
+
+  render();
+}
+
+function startEdit(id, el) {
+  const task = tasks.find(t=>t.id===id);
+  if (!task) return;
+  const textEl = el.querySelector('.task-text');
+  if (!textEl) return;
+  const input = document.createElement('input');
+  input.className = 'task-edit';
+  input.value = task.text;
+  input.autocapitalize = 'sentences';
+  textEl.replaceWith(input);
+  input.focus();
+  // Select all on mobile
+  setTimeout(() => input.select(), 50);
+
+  const finish = () => {
+    const val = input.value.trim();
+    if (val) task.text = val;
+    save(); render();
+  };
+  input.addEventListener('blur', finish);
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter') { e.preventDefault(); input.blur(); }
+    if (e.key === 'Escape') { input.value = task.text; input.blur(); }
+  });
+}
+
+function addTask(text) {
+  if (!text.trim()) return;
+  tasks.unshift({ id: uid(), text: text.trim(), done: false });
+  save(); render();
+  addInput.value = '';
+  if (navigator.vibrate) navigator.vibrate(5);
+}
+
+function burst(cx, cy) {
+  const wrap = document.createElement('div');
+  wrap.className = 'burst';
+  wrap.style.left = cx+'px';
+  wrap.style.top  = cy+'px';
+  document.body.appendChild(wrap);
+  const cols = ['#c8f565','#a8d84a','#e0ff90','#ffffff','#6fd44a'];
+  for (let i=0; i<14; i++) {
+    const dot   = document.createElement('div');
+    dot.className = 'burst-dot';
+    const angle = (i/14)*Math.PI*2;
+    const dist  = 35+Math.random()*45;
+    dot.style.setProperty('--tx', Math.cos(angle)*dist+'px');
+    dot.style.setProperty('--ty', Math.sin(angle)*dist+'px');
+    dot.style.setProperty('--d', (0.45+Math.random()*0.25)+'s');
+    dot.style.background = cols[i%cols.length];
+    dot.style.animationDelay = (Math.random()*0.08)+'s';
+    wrap.appendChild(dot);
+  }
+  setTimeout(()=>wrap.remove(), 800);
+}
+
+function esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// ─── Events ───────────────────────────────────────────────────────────────────
+addBtn.addEventListener('click', ()=>addTask(addInput.value));
+addInput.addEventListener('keydown', e=>{ if(e.key==='Enter') addTask(addInput.value); });
+
+// Keep input visible above keyboard on iOS
+addInput.addEventListener('focus', () => {
+  setTimeout(() => addInput.scrollIntoView({ behavior:'smooth', block:'center' }), 350);
+});
+
+// ─── PWA Install ──────────────────────────────────────────────────────────────
+let deferredPrompt = null;
+const installBanner = document.getElementById('installBanner');
+const installBtn    = document.getElementById('installBtn');
+const dismissBanner = document.getElementById('dismissBanner');
+const iosBanner     = document.getElementById('iosBanner');
+const dismissIos    = document.getElementById('dismissIos');
+
+// Android / Chrome
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  if (!localStorage.getItem('install-dismissed')) {
+    installBanner.style.display = '';
+  }
+});
+
+installBtn.addEventListener('click', async () => {
+  if (!deferredPrompt) return;
+  deferredPrompt.prompt();
+  const { outcome } = await deferredPrompt.userChoice;
+  deferredPrompt = null;
+  installBanner.style.display = 'none';
+});
+
+dismissBanner.addEventListener('click', () => {
+  installBanner.style.display = 'none';
+  localStorage.setItem('install-dismissed', '1');
+});
+
+// iOS Safari
+const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
+const isStandalone = window.navigator.standalone;
+if (isIos && !isStandalone && !localStorage.getItem('ios-dismissed')) {
+  iosBanner.style.display = '';
+}
+
+dismissIos.addEventListener('click', () => {
+  iosBanner.style.display = 'none';
+  localStorage.setItem('ios-dismissed', '1');
+});
+
+// ─── Service Worker ───────────────────────────────────────────────────────────
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').catch(()=>{});
+}
+
+// ─── Init ─────────────────────────────────────────────────────────────────────
+render();
+</script>
+</body>
+</html>
