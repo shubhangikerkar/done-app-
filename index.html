@@ -61,7 +61,6 @@
     --done-text: #c7e57a;
   }
 
-  /* Ambient glow */
   body::before {
     content: '';
     position: fixed;
@@ -101,13 +100,15 @@
     justify-content: space-between;
     max-width: 600px;
     margin: 0 auto;
+    gap: 8px;
   }
 
   .topbar-right {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 6px;
     flex-wrap: nowrap;
+    flex-shrink: 0;
   }
 
   .mode-btn {
@@ -124,13 +125,22 @@
     -webkit-tap-highlight-color: transparent;
     transition: border-color 0.2s, background 0.2s, color 0.2s;
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .mode-btn.active {
     border-color: var(--accent);
-    color: #0d1510;
-    background: var(--accent);
+    background: var(--done-bg);
   }
+
+  /* Student mode icon SVG strokes inherit color */
+  .mode-btn .icon-svg { display: block; }
+  .mode-btn .icon-svg .icon-stroke { stroke: var(--muted); transition: stroke 0.2s; }
+  .mode-btn .icon-svg .icon-fill   { fill:   var(--muted); transition: fill 0.2s; }
+  .mode-btn.active .icon-svg .icon-stroke { stroke: var(--accent); }
+  .mode-btn.active .icon-svg .icon-fill   { fill:   var(--accent); }
 
   .student-only {
     display: none !important;
@@ -144,10 +154,7 @@
     display: flex !important;
   }
 
-  body.student-mode .deadline-editor.student-only.open {
-    display: grid !important;
-  }
-
+  /* ── DEADLINE STRIP — now a single collapsible block ── */
   .deadline-strip {
     max-width: 600px;
     margin: 12px auto 0;
@@ -199,20 +206,30 @@
     -webkit-tap-highlight-color: transparent;
   }
 
+  /* Inline editor — slides open below strip */
   .deadline-editor {
     max-width: 600px;
-    margin: 8px auto 0;
+    margin: 0 auto;
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transition: max-height 0.3s ease, opacity 0.25s ease, margin-top 0.25s ease;
+  }
+
+  .deadline-editor.open {
+    max-height: 200px;
+    opacity: 1;
+    margin-top: 8px;
+  }
+
+  .deadline-editor-inner {
     background: rgba(24,24,24,0.92);
     border: 1px solid var(--border);
     border-radius: 12px;
     padding: 12px;
-    display: none;
-    gap: 8px;
-  }
-
-  .deadline-editor.open {
     display: grid;
-    grid-template-columns: 1fr 1fr auto auto;
+    gap: 8px;
+    grid-template-columns: 1fr auto auto;
   }
 
   .deadline-input {
@@ -224,16 +241,24 @@
     padding: 9px 10px;
     font-size: 12px;
     outline: none;
+    font-family: var(--font-body);
   }
 
   .deadline-input:focus {
     border-color: var(--accent);
   }
 
-  @media (max-width: 620px) {
-    .deadline-editor.open {
-      grid-template-columns: 1fr 1fr;
-    }
+  /* First row: title full width */
+  .deadline-input.title-input {
+    grid-column: 1 / -1;
+  }
+
+  /* Second row: date + save + clear */
+  .deadline-row2 {
+    grid-column: 1 / -1;
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 8px;
   }
 
   .app-title {
@@ -243,34 +268,34 @@
     letter-spacing: -0.02em;
     color: var(--text);
     line-height: 1;
+    flex-shrink: 0;
   }
 
   .app-title span { color: var(--accent); }
 
+  /* ── PILL STATS — single line, nowrap ── */
   .pill-stats {
     display: flex;
-    gap: 8px;
+    gap: 5px;
     align-items: center;
+    flex-wrap: nowrap;
+    overflow: hidden;
   }
 
   .pill {
     background: var(--surface);
     border: 1px solid var(--border);
     border-radius: 99px;
-    padding: 4px 12px;
-    font-size: 12px;
+    padding: 4px 8px;
+    font-size: 11px;
     color: var(--muted);
     font-weight: 400;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 
   .pill strong { color: var(--text); font-weight: 500; }
   .pill.green { border-color: var(--done-border); color: var(--done-text); background: var(--done-bg); }
-
-  @media (max-width: 560px) {
-    .topbar-inner {
-      gap: 8px;
-    }
-  }
 
   /* ── SCROLL AREA ── */
   .scroll-area {
@@ -286,7 +311,6 @@
     z-index: 1;
   }
 
-  /* Progress */
   .progress-wrap {
     margin-bottom: 20px;
     animation: fadeSlideDown 0.6s 0.1s ease both;
@@ -317,7 +341,6 @@
     box-shadow: 0 0 8px rgba(200,245,101,0.5);
   }
 
-  /* Section labels */
   .section-label {
     font-size: 10px;
     letter-spacing: 0.15em;
@@ -328,14 +351,13 @@
     padding-left: 4px;
   }
 
-  /* Task list */
   .task-list {
     display: flex;
     flex-direction: column;
     gap: 10px;
   }
 
-  /* Task */
+  /* ── TASK ── */
   .task {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -359,7 +381,21 @@
     box-shadow: 0 0 0 1px rgba(200,245,101,0.06), 0 4px 20px rgba(200,245,101,0.06);
   }
 
-  /* Ripple */
+  /* Reset badge on task — subtle green dot instead of emoji */
+  .task.auto-reset .task-text::after {
+    content: '';
+    display: inline-block;
+    width: 6px;
+    height: 6px;
+    background: var(--done-text);
+    border-radius: 50%;
+    margin-left: 7px;
+    opacity: 0.5;
+    vertical-align: middle;
+    position: relative;
+    top: -1px;
+  }
+
   .ripple {
     position: absolute;
     border-radius: 50%;
@@ -371,7 +407,6 @@
 
   @keyframes rippleAnim { to { transform: scale(4); opacity: 0; } }
 
-  /* Checkbox */
   .check-wrap {
     flex-shrink: 0;
     width: 26px;
@@ -403,7 +438,6 @@
 
   .task.done .check-icon { opacity: 1; transform: scale(1) rotate(0); }
 
-  /* Text */
   .task-text {
     flex: 1;
     font-size: 15px;
@@ -422,7 +456,6 @@
     text-decoration-color: var(--done-text);
   }
 
-  /* Swipe actions shown on press-hold (mobile) */
   .task-actions {
     display: flex;
     gap: 6px;
@@ -448,6 +481,27 @@
 
   .action-btn:active { opacity: 0.7; }
   .action-btn.delete { color: #c05050; border-color: #3a1a1a; background: #1e0a0a; }
+
+  /* Reset-next-day button */
+  .action-btn.reset-day {
+    font-size: 13px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .action-btn.reset-day .icon-svg .icon-stroke { stroke: var(--muted); transition: stroke 0.2s; }
+  .action-btn.reset-day .icon-svg .icon-fill   { fill:   var(--muted); transition: fill 0.2s; }
+
+  .action-btn.reset-day.active {
+    color: var(--accent);
+    border-color: var(--done-border);
+    background: var(--done-bg);
+  }
+
+  .action-btn.reset-day.active .icon-svg .icon-stroke { stroke: var(--accent); }
+  .action-btn.reset-day.active .icon-svg .icon-fill   { fill:   var(--accent); }
 
   .action-btn.drag-handle {
     cursor: grab;
@@ -478,7 +532,6 @@
     animation: none;
   }
 
-  /* Inline edit */
   .task-edit {
     flex: 1;
     background: transparent;
@@ -494,7 +547,6 @@
     caret-color: var(--accent);
   }
 
-  /* Empty */
   .empty {
     text-align: center;
     padding: 60px 20px;
@@ -511,7 +563,7 @@
     filter: grayscale(1) opacity(0.35);
   }
 
-  /* ── TIMER SECTION ── */
+  /* ── TIMER ── */
   .timer-wrap {
     background: var(--surface);
     border: 1px solid var(--border);
@@ -537,9 +589,7 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  .timer-toggle:active {
-    border-color: var(--accent);
-  }
+  .timer-toggle:active { border-color: var(--accent); }
 
   .timer-toggle-left {
     display: flex;
@@ -629,13 +679,7 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  .timer-preset-btn:active {
-    background: var(--accent);
-    color: #0f0f0f;
-    border-color: var(--accent);
-  }
-
-  .timer-preset-btn.active {
+  .timer-preset-btn:active, .timer-preset-btn.active {
     background: var(--accent);
     color: #0f0f0f;
     border-color: var(--accent);
@@ -657,18 +701,10 @@
     caret-color: var(--accent);
   }
 
-  .timer-custom-input:focus {
-    border-color: var(--accent);
-  }
+  .timer-custom-input:focus { border-color: var(--accent); }
+  .timer-custom-input::placeholder { color: var(--muted); }
 
-  .timer-custom-input::placeholder {
-    color: var(--muted);
-  }
-
-  .timer-controls {
-    display: flex;
-    gap: 8px;
-  }
+  .timer-controls { display: flex; gap: 8px; }
 
   .timer-btn {
     flex: 1;
@@ -684,19 +720,9 @@
     -webkit-tap-highlight-color: transparent;
   }
 
-  .timer-btn:active {
-    transform: scale(0.96);
-  }
-
-  .timer-btn.stop {
-    background: var(--border);
-    color: var(--text);
-  }
-
-  .timer-btn:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
-  }
+  .timer-btn:active { transform: scale(0.96); }
+  .timer-btn.stop { background: var(--border); color: var(--text); }
+  .timer-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
   /* ── BOTTOM ADD BAR ── */
   .add-bar {
@@ -763,7 +789,6 @@
 
   .add-btn:active { transform: scale(0.94); }
 
-  /* Install banner */
   .install-banner {
     background: var(--done-bg);
     border: 1px solid var(--done-border);
@@ -809,7 +834,6 @@
     flex-shrink: 0;
   }
 
-  /* Burst */
   .burst { position: fixed; pointer-events: none; z-index: 9999; }
   .burst-dot {
     position: absolute;
@@ -825,7 +849,6 @@
     100% { transform: translate(calc(-50% + var(--tx)), calc(-50% + var(--ty))) scale(0); opacity: 0; }
   }
 
-  /* Animations */
   @keyframes fadeSlideDown {
     from { opacity: 0; transform: translateY(-12px); }
     to   { opacity: 1; transform: translateY(0); }
@@ -851,7 +874,6 @@
     overflow: hidden;
   }
 
-  /* Scrollbar */
   ::-webkit-scrollbar { width: 0; }
 </style>
 </head>
@@ -866,9 +888,32 @@
         <div class="pill"><strong id="pTotal">0</strong> tasks</div>
         <div class="pill green"><strong id="pDone">0</strong> done</div>
       </div>
-      <button class="mode-btn" id="studentModeBtn" type="button" aria-label="Toggle student mode" title="Student mode" aria-pressed="false">🎓</button>
+      <button class="mode-btn" id="studentModeBtn" type="button" aria-label="Toggle student mode" title="Student mode" aria-pressed="false">
+        <svg class="icon-svg" width="18" height="18" viewBox="0 0 18 18" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <!-- Open book left page -->
+          <path class="icon-stroke" d="M8.5 3.5 C6.5 3.5 3 4 2 5 L2 14 C3 13.2 6.5 12.8 8.5 12.8 Z" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+          <!-- Open book right page -->
+          <path class="icon-stroke" d="M9.5 3.5 C11.5 3.5 15 4 16 5 L16 14 C15 13.2 11.5 12.8 9.5 12.8 Z" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round" fill="none"/>
+          <!-- Spine -->
+          <line class="icon-stroke" x1="9" y1="3" x2="9" y2="13.2" stroke-width="1" stroke-linecap="round"/>
+          <!-- Left page lines -->
+          <line class="icon-stroke" x1="3.5" y1="7" x2="7.8" y2="6.5" stroke-width="0.8" stroke-linecap="round" opacity="0.7"/>
+          <line class="icon-stroke" x1="3.5" y1="9.5" x2="7.8" y2="9" stroke-width="0.8" stroke-linecap="round" opacity="0.7"/>
+          <!-- Right page lines -->
+          <line class="icon-stroke" x1="10.2" y1="6.5" x2="14.5" y2="7" stroke-width="0.8" stroke-linecap="round" opacity="0.7"/>
+          <line class="icon-stroke" x1="10.2" y1="9" x2="14.5" y2="9.5" stroke-width="0.8" stroke-linecap="round" opacity="0.7"/>
+          <!-- Pencil (top-right, angled 45deg) -->
+          <g transform="translate(14.5, 1.5) rotate(45)">
+            <rect class="icon-fill" x="-1.5" y="-4" width="3" height="5.5" rx="0.6"/>
+            <path class="icon-fill" d="M -1.5 1.5 L 1.5 1.5 L 0 4 Z" opacity="0.75"/>
+            <rect class="icon-fill" x="-1.5" y="-5.5" width="3" height="2" rx="0.4" opacity="0.5"/>
+          </g>
+        </svg>
+      </button>
     </div>
   </div>
+
+  <!-- Deadline strip: only shown in student mode -->
   <div class="deadline-strip student-only" id="deadlineStrip">
     <div class="deadline-main">
       <div class="deadline-title" id="deadlineTitle">No exam deadline set</div>
@@ -876,18 +921,23 @@
     </div>
     <button class="deadline-btn" id="deadlineToggle" type="button">Set</button>
   </div>
+
+  <!-- Deadline editor: slides open only when Set/Edit clicked -->
   <div class="deadline-editor student-only" id="deadlineEditor">
-    <input class="deadline-input" id="deadlineTitleInput" type="text" maxlength="60" placeholder="Exam name (e.g. Bio Exam)"/>
-    <input class="deadline-input" id="deadlineDateInput" type="datetime-local"/>
-    <button class="deadline-btn" id="deadlineSaveBtn" type="button">Save</button>
-    <button class="deadline-btn" id="deadlineClearBtn" type="button">Clear</button>
+    <div class="deadline-editor-inner">
+      <input class="deadline-input title-input" id="deadlineTitleInput" type="text" maxlength="60" placeholder="Exam name (e.g. Bio Exam)"/>
+      <div class="deadline-row2">
+        <input class="deadline-input" id="deadlineDateInput" type="datetime-local"/>
+        <button class="deadline-btn" id="deadlineSaveBtn" type="button">Save</button>
+        <button class="deadline-btn" id="deadlineClearBtn" type="button">Clear</button>
+      </div>
+    </div>
   </div>
 </div>
 
 <!-- SCROLL AREA -->
 <div class="scroll-area">
 
-  <!-- Install banner (shown if installable) -->
   <div class="install-banner" id="installBanner" style="display:none">
     <div style="font-size:22px">📲</div>
     <div class="install-banner-text">
@@ -898,7 +948,6 @@
     <button class="dismiss-btn" id="dismissBanner">✕</button>
   </div>
 
-  <!-- iOS instructions (shown on iOS Safari) -->
   <div class="install-banner" id="iosBanner" style="display:none">
     <div style="font-size:22px">🍎</div>
     <div class="install-banner-text">
@@ -908,7 +957,7 @@
     <button class="dismiss-btn" id="dismissIos">✕</button>
   </div>
 
-  <!-- Timer Section -->
+  <!-- Timer (student mode only) -->
   <div class="timer-wrap student-only" id="timerWrap">
     <button class="timer-toggle" id="timerToggle" type="button" aria-expanded="false" aria-controls="timerPanel">
       <span class="timer-toggle-left">
@@ -966,17 +1015,41 @@
 </div>
 
 <script>
+// ─── IST midnight reset helper ────────────────────────────────────────────────
+// IST = UTC+5:30
+function getISTMidnightISO() {
+  const now = new Date();
+  // Get current date in IST
+  const istOffset = 5.5 * 60; // minutes
+  const utcMs = now.getTime() + now.getTimezoneOffset() * 60000;
+  const istNow = new Date(utcMs + istOffset * 60000);
+
+  // Next midnight IST
+  const midnight = new Date(istNow);
+  midnight.setHours(24, 0, 0, 0); // next midnight in IST
+  // Convert back to UTC ISO
+  const midnightUTC = new Date(midnight.getTime() - istOffset * 60000);
+  return midnightUTC.toISOString();
+}
+
+function msUntilISTMidnight() {
+  return new Date(getISTMidnightISO()).getTime() - Date.now();
+}
+
 // ─── State ────────────────────────────────────────────────────────────────────
 let tasks = [];
 try { tasks = JSON.parse(localStorage.getItem('done-tasks') || '[]'); } catch(e){}
 if (!tasks.length) {
   tasks = [
-    { id: uid(), text: 'Review morning emails 📬', done: false },
-    { id: uid(), text: 'Finish the project proposal', done: false },
-    { id: uid(), text: 'Take a lunch break 🥗', done: true },
+    { id: uid(), text: 'Review morning emails 📬', done: false, autoReset: false },
+    { id: uid(), text: 'Finish the project proposal', done: false, autoReset: false },
+    { id: uid(), text: 'Take a lunch break 🥗', done: true, autoReset: false },
   ];
   save();
 }
+
+// Migrate old tasks that don't have autoReset field
+tasks = tasks.map(t => ({ autoReset: false, ...t }));
 
 let deadline = null;
 try { deadline = JSON.parse(localStorage.getItem('done-deadline') || 'null'); } catch(e){}
@@ -986,42 +1059,62 @@ function uid() { return Date.now().toString(36) + Math.random().toString(36).sli
 function save() { try { localStorage.setItem('done-tasks', JSON.stringify(tasks)); } catch(e){} }
 function saveDeadline() { try { localStorage.setItem('done-deadline', JSON.stringify(deadline)); } catch(e){} }
 
+// ─── Auto-reset at IST midnight ───────────────────────────────────────────────
+function scheduleAutoReset() {
+  const ms = msUntilISTMidnight();
+  setTimeout(() => {
+    // Reset all tasks that have autoReset enabled
+    let changed = false;
+    tasks.forEach(t => {
+      if (t.autoReset && t.done) {
+        t.done = false;
+        changed = true;
+      }
+    });
+    if (changed) { save(); render(); }
+    // Schedule next midnight
+    scheduleAutoReset();
+  }, ms);
+}
+
+scheduleAutoReset();
+
 // ─── DOM refs ─────────────────────────────────────────────────────────────────
-const addInput    = document.getElementById('addInput');
-const addBtn      = document.getElementById('addBtn');
-const progressWrap= document.getElementById('progressWrap');
-const progressFill= document.getElementById('progressFill');
-const progressPct = document.getElementById('progressPct');
-const pillStats   = document.getElementById('pillStats');
-const pTotal      = document.getElementById('pTotal');
-const pDone       = document.getElementById('pDone');
-const pendingList = document.getElementById('pendingList');
-const doneList    = document.getElementById('doneList');
-const doneSection = document.getElementById('doneSection');
-const pendingLabel= document.getElementById('pendingLabel');
-const deadlineTitle = document.getElementById('deadlineTitle');
-const deadlineCountdown = document.getElementById('deadlineCountdown');
-const deadlineToggle = document.getElementById('deadlineToggle');
-const deadlineEditor = document.getElementById('deadlineEditor');
+const addInput      = document.getElementById('addInput');
+const addBtn        = document.getElementById('addBtn');
+const progressWrap  = document.getElementById('progressWrap');
+const progressFill  = document.getElementById('progressFill');
+const progressPct   = document.getElementById('progressPct');
+const pillStats     = document.getElementById('pillStats');
+const pTotal        = document.getElementById('pTotal');
+const pDone         = document.getElementById('pDone');
+const pendingList   = document.getElementById('pendingList');
+const doneList      = document.getElementById('doneList');
+const doneSection   = document.getElementById('doneSection');
+const pendingLabel  = document.getElementById('pendingLabel');
+const deadlineTitle      = document.getElementById('deadlineTitle');
+const deadlineCountdown  = document.getElementById('deadlineCountdown');
+const deadlineToggle     = document.getElementById('deadlineToggle');
+const deadlineEditor     = document.getElementById('deadlineEditor');
 const deadlineTitleInput = document.getElementById('deadlineTitleInput');
-const deadlineDateInput = document.getElementById('deadlineDateInput');
-const deadlineSaveBtn = document.getElementById('deadlineSaveBtn');
-const deadlineClearBtn = document.getElementById('deadlineClearBtn');
-const studentModeBtn = document.getElementById('studentModeBtn');
+const deadlineDateInput  = document.getElementById('deadlineDateInput');
+const deadlineSaveBtn    = document.getElementById('deadlineSaveBtn');
+const deadlineClearBtn   = document.getElementById('deadlineClearBtn');
+const studentModeBtn     = document.getElementById('studentModeBtn');
 
 // Timer refs
-const timerWrap    = document.getElementById('timerWrap');
-const timerToggle  = document.getElementById('timerToggle');
-const timerToggleSub = document.getElementById('timerToggleSub');
+const timerWrap        = document.getElementById('timerWrap');
+const timerToggle      = document.getElementById('timerToggle');
+const timerToggleSub   = document.getElementById('timerToggleSub');
 const timerToggleValue = document.getElementById('timerToggleValue');
-const timerDisplay = document.getElementById('timerDisplay');
-const timerStatus  = document.getElementById('timerStatus');
-const timerPresets = document.getElementById('timerPresets');
-const timerCustom  = document.getElementById('timerCustom');
-const timerStartBtn= document.getElementById('timerStartBtn');
-const timerStopBtn = document.getElementById('timerStopBtn');
-const timerResetBtn= document.getElementById('timerResetBtn');
-const scrollArea   = document.querySelector('.scroll-area');
+const timerDisplay     = document.getElementById('timerDisplay');
+const timerStatus      = document.getElementById('timerStatus');
+const timerPresets     = document.getElementById('timerPresets');
+const timerCustom      = document.getElementById('timerCustom');
+const timerStartBtn    = document.getElementById('timerStartBtn');
+const timerStopBtn     = document.getElementById('timerStopBtn');
+const timerResetBtn    = document.getElementById('timerResetBtn');
+const scrollArea       = document.querySelector('.scroll-area');
 
 // ─── Timer State ──────────────────────────────────────────────────────────────
 let timerSeconds = 0;
@@ -1089,10 +1182,7 @@ function updateTimerDisplay() {
 }
 
 function updateTimerSummary() {
-  if (timerRunning) {
-    timerToggleSub.textContent = 'Running';
-    return;
-  }
+  if (timerRunning) { timerToggleSub.textContent = 'Running'; return; }
   timerToggleSub.textContent = timerSeconds > 0 ? 'Ready to start' : 'Tap to set';
 }
 
@@ -1100,9 +1190,7 @@ function updatePresetButtons() {
   document.querySelectorAll('.timer-preset-btn').forEach(btn => {
     btn.classList.remove('active');
     presets.forEach(p => {
-      if (btn.textContent === p.label && timerSeconds === p.seconds) {
-        btn.classList.add('active');
-      }
+      if (btn.textContent === p.label && timerSeconds === p.seconds) btn.classList.add('active');
     });
   });
 }
@@ -1114,15 +1202,14 @@ function startTimer() {
   updateTimerSummary();
   timerStartBtn.style.display = 'none';
   timerStopBtn.style.display = 'flex';
-  
+
   timerInterval = setInterval(() => {
     timerSeconds--;
     updateTimerDisplay();
-    
     if (timerSeconds <= 0) {
       clearInterval(timerInterval);
       timerRunning = false;
-      timerStatus.textContent = 'Time\'s up!';
+      timerStatus.textContent = "Time's up!";
       updateTimerSummary();
       timerStartBtn.style.display = 'flex';
       timerStopBtn.style.display = 'none';
@@ -1156,51 +1243,42 @@ function resetTimer() {
 }
 
 function playTimerSound() {
-  const audioContext = new (window.AudioContext || window.webkitAudioContext)();
-  const osc = audioContext.createOscillator();
-  const gain = audioContext.createGain();
-  
-  osc.connect(gain);
-  gain.connect(audioContext.destination);
-  
-  osc.frequency.value = 800;
-  osc.type = 'sine';
-  
-  gain.gain.setValueAtTime(0.3, audioContext.currentTime);
-  gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
-  
-  osc.start(audioContext.currentTime);
-  osc.stop(audioContext.currentTime + 0.5);
+  try {
+    const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+    const osc = audioContext.createOscillator();
+    const gain = audioContext.createGain();
+    osc.connect(gain);
+    gain.connect(audioContext.destination);
+    osc.frequency.value = 800;
+    osc.type = 'sine';
+    gain.gain.setValueAtTime(0.3, audioContext.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+    osc.start(audioContext.currentTime);
+    osc.stop(audioContext.currentTime + 0.5);
+  } catch(e) {}
 }
 
 function parseCustomTimer(input) {
-  const timeRegex = /^(\d+)(m|s|h)$/i;
-  const match = input.trim().toLowerCase().match(timeRegex);
+  const match = input.trim().toLowerCase().match(/^(\d+)(m|s|h)$/);
   if (!match) return null;
-  
   const value = parseInt(match[1]);
   const unit = match[2];
-  
   if (unit === 'm') return value * 60;
   if (unit === 's') return value;
   if (unit === 'h') return value * 3600;
   return null;
 }
 
+// ─── Deadline ─────────────────────────────────────────────────────────────────
 function formatCountdownText(targetMs) {
   const diff = targetMs - Date.now();
   if (diff <= 0) return 'Due now';
-
   const totalHours = Math.floor(diff / (1000 * 60 * 60));
   const days = Math.floor(totalHours / 24);
   const hours = totalHours % 24;
-
-  if (days > 0) {
-    return `${days} day${days === 1 ? '' : 's'}, ${hours} hour${hours === 1 ? '' : 's'}`;
-  }
-
+  if (days > 0) return `${days} day${days===1?'':'s'}, ${hours} hour${hours===1?'':'s'}`;
   const minutes = Math.max(1, Math.floor(diff / (1000 * 60)));
-  return `${hours} hour${hours === 1 ? '' : 's'}, ${minutes % 60} minute${minutes % 60 === 1 ? '' : 's'}`;
+  return `${hours} hour${hours===1?'':'s'}, ${minutes % 60} minute${minutes%60===1?'':'s'}`;
 }
 
 function toLocalInputValue(isoString) {
@@ -1219,12 +1297,11 @@ function renderDeadline() {
     deadlineToggle.textContent = 'Set';
     return;
   }
-
   const dueMs = new Date(deadline.dueAt).getTime();
   const diffMs = dueMs - Date.now();
   deadlineTitle.textContent = deadline.title;
   deadlineCountdown.textContent = `${formatCountdownText(dueMs)} left`;
-  deadlineCountdown.classList.toggle('urgent', diffMs <= 24 * 60 * 60 * 1000 && diffMs > 0);
+  deadlineCountdown.classList.toggle('urgent', diffMs <= 24*60*60*1000 && diffMs > 0);
   deadlineToggle.textContent = 'Edit';
 }
 
@@ -1234,7 +1311,7 @@ function startDeadlineTicker() {
   deadlineTicker = setInterval(renderDeadline, 30000);
 }
 
-// ─── Timer Events ─────────────────────────────────────────────────────────────
+// ─── Events: Timer ────────────────────────────────────────────────────────────
 timerToggle.addEventListener('click', () => {
   const isOpen = timerWrap.classList.toggle('open');
   timerToggle.setAttribute('aria-expanded', String(isOpen));
@@ -1246,32 +1323,30 @@ timerResetBtn.addEventListener('click', resetTimer);
 
 timerCustom.addEventListener('keydown', e => {
   if (e.key === 'Enter') {
-    const seconds = parseCustomTimer(timerCustom.value);
-    if (seconds && seconds > 0) {
-      setTimer(seconds);
-      timerCustom.blur();
-    }
+    const s = parseCustomTimer(timerCustom.value);
+    if (s && s > 0) { setTimer(s); timerCustom.blur(); }
   }
 });
-
 timerCustom.addEventListener('blur', () => {
-  const seconds = parseCustomTimer(timerCustom.value);
-  if (seconds && seconds > 0) {
-    setTimer(seconds);
-  }
+  const s = parseCustomTimer(timerCustom.value);
+  if (s && s > 0) setTimer(s);
 });
 
+// ─── Events: Student mode ─────────────────────────────────────────────────────
 studentModeBtn.addEventListener('click', () => {
   studentMode = !studentMode;
   localStorage.setItem('done-student-mode', studentMode ? '1' : '0');
   applyStudentMode();
 });
 
+// ─── Events: Deadline ─────────────────────────────────────────────────────────
 deadlineToggle.addEventListener('click', () => {
-  const open = deadlineEditor.classList.toggle('open');
-  if (!open) return;
-  deadlineTitleInput.value = deadline && deadline.title ? deadline.title : '';
-  deadlineDateInput.value = deadline && deadline.dueAt ? toLocalInputValue(deadline.dueAt) : '';
+  const open = !deadlineEditor.classList.contains('open');
+  deadlineEditor.classList.toggle('open', open);
+  if (open) {
+    deadlineTitleInput.value = deadline && deadline.title ? deadline.title : '';
+    deadlineDateInput.value  = deadline && deadline.dueAt  ? toLocalInputValue(deadline.dueAt) : '';
+  }
 });
 
 deadlineSaveBtn.addEventListener('click', () => {
@@ -1280,11 +1355,7 @@ deadlineSaveBtn.addEventListener('click', () => {
   if (!title || !dueValue) return;
   const dueDate = new Date(dueValue);
   if (Number.isNaN(dueDate.getTime())) return;
-
-  deadline = {
-    title,
-    dueAt: dueDate.toISOString()
-  };
+  deadline = { title, dueAt: dueDate.toISOString() };
   saveDeadline();
   renderDeadline();
   deadlineEditor.classList.remove('open');
@@ -1300,9 +1371,9 @@ deadlineClearBtn.addEventListener('click', () => {
 // ─── Render ───────────────────────────────────────────────────────────────────
 function render() {
   const total   = tasks.length;
-  const doneArr = tasks.filter(t=>t.done);
-  const pending = tasks.filter(t=>!t.done);
-  const pct     = total ? Math.round((doneArr.length/total)*100) : 0;
+  const doneArr = tasks.filter(t => t.done);
+  const pending = tasks.filter(t => !t.done);
+  const pct     = total ? Math.round((doneArr.length / total) * 100) : 0;
 
   progressWrap.style.display = total ? '' : 'none';
   pillStats.style.display    = total ? '' : 'none';
@@ -1323,7 +1394,7 @@ function render() {
 }
 
 function renderList(container, arr) {
-  const existing = new Map([...container.querySelectorAll('.task')].map(el=>[el.dataset.id, el]));
+  const existing = new Map([...container.querySelectorAll('.task')].map(el => [el.dataset.id, el]));
 
   arr.forEach((t, i) => {
     let el = existing.get(t.id);
@@ -1333,19 +1404,21 @@ function renderList(container, arr) {
       container.appendChild(el);
     } else {
       el.classList.toggle('done', t.done);
+      el.classList.toggle('auto-reset', !!t.autoReset);
       const textEl = el.querySelector('.task-text');
       if (textEl) textEl.textContent = t.text;
+      // Update reset-day button state
+      const rdb = el.querySelector('.reset-day');
+      if (rdb) rdb.classList.toggle('active', !!t.autoReset);
       existing.delete(t.id);
     }
   });
 
-  // Remove stale
   existing.forEach(el => {
     el.classList.add('removing');
-    el.addEventListener('animationend', ()=>el.remove(), {once:true});
+    el.addEventListener('animationend', () => el.remove(), { once: true });
   });
 
-  // Re-order
   arr.forEach(t => {
     const el = container.querySelector(`[data-id="${t.id}"]`);
     if (el) container.appendChild(el);
@@ -1354,7 +1427,7 @@ function renderList(container, arr) {
 
 function syncOrderFromDom() {
   const pendingIds = [...pendingList.querySelectorAll('.task')].map(el => el.dataset.id);
-  const doneIds = [...doneList.querySelectorAll('.task')].map(el => el.dataset.id);
+  const doneIds    = [...doneList.querySelectorAll('.task')].map(el => el.dataset.id);
   const byId = new Map(tasks.map(t => [t.id, t]));
   const reordered = [...pendingIds, ...doneIds].map(id => byId.get(id)).filter(Boolean);
   if (reordered.length !== tasks.length) return;
@@ -1379,15 +1452,10 @@ function startTaskDrag(e, taskEl) {
 
   taskEl.classList.add('dragging');
   taskEl.style.width = `${rect.width}px`;
-  taskEl.style.left = `${rect.left}px`;
-  taskEl.style.top = `${rect.top}px`;
+  taskEl.style.left  = `${rect.left}px`;
+  taskEl.style.top   = `${rect.top}px`;
 
-  dragState = {
-    taskEl,
-    list,
-    placeholder,
-    offsetY: e.clientY - rect.top
-  };
+  dragState = { taskEl, list, placeholder, offsetY: e.clientY - rect.top };
 
   document.addEventListener('pointermove', onTaskDragMove);
   document.addEventListener('pointerup', endTaskDrag);
@@ -1396,7 +1464,6 @@ function startTaskDrag(e, taskEl) {
 
 function onTaskDragMove(e) {
   if (!dragState) return;
-
   dragState.taskEl.style.top = `${e.clientY - dragState.offsetY}px`;
 
   const hovered = document.elementFromPoint(e.clientX, e.clientY);
@@ -1416,17 +1483,13 @@ function onTaskDragMove(e) {
   if (scrollArea) {
     const areaRect = scrollArea.getBoundingClientRect();
     const edge = 72;
-    if (e.clientY < areaRect.top + edge) {
-      scrollArea.scrollTop -= 10;
-    } else if (e.clientY > areaRect.bottom - edge) {
-      scrollArea.scrollTop += 10;
-    }
+    if (e.clientY < areaRect.top + edge) scrollArea.scrollTop -= 10;
+    else if (e.clientY > areaRect.bottom - edge) scrollArea.scrollTop += 10;
   }
 }
 
 function endTaskDrag() {
   if (!dragState) return;
-
   document.removeEventListener('pointermove', onTaskDragMove);
   document.removeEventListener('pointerup', endTaskDrag);
   document.removeEventListener('pointercancel', endTaskDrag);
@@ -1434,8 +1497,8 @@ function endTaskDrag() {
   const { taskEl, placeholder, list } = dragState;
   taskEl.classList.remove('dragging');
   taskEl.style.width = '';
-  taskEl.style.left = '';
-  taskEl.style.top = '';
+  taskEl.style.left  = '';
+  taskEl.style.top   = '';
 
   list.insertBefore(taskEl, placeholder);
   placeholder.remove();
@@ -1445,21 +1508,46 @@ function endTaskDrag() {
 
 function buildTask(t) {
   const el = document.createElement('div');
-  el.className = 'task' + (t.done ? ' done' : '');
+  el.className = 'task' + (t.done ? ' done' : '') + (t.autoReset ? ' auto-reset' : '');
   el.dataset.id = t.id;
+
   el.innerHTML = `
     <div class="check-wrap"><span class="check-icon">✓</span></div>
     <span class="task-text">${esc(t.text)}</span>
     <div class="task-actions">
       <button class="action-btn drag-handle" title="Drag to reorder" aria-label="Drag to reorder">⋮⋮</button>
+      <button class="action-btn reset-day${t.autoReset ? ' active' : ''}" title="Reset at midnight IST" aria-label="Toggle daily reset">
+        <svg class="icon-svg" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path class="icon-stroke" d="M 5.5 12 A 5.5 5.5 0 0 1 5.5 4" stroke-width="1.6" stroke-linecap="round"/>
+          <path class="icon-stroke" d="M 3.2 6.2 L 5.5 4 L 7.8 6.2" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+          <path class="icon-stroke" d="M 10.5 4 A 5.5 5.5 0 0 1 10.5 12" stroke-width="1.6" stroke-linecap="round"/>
+          <path class="icon-stroke" d="M 8.2 9.8 L 10.5 12 L 12.8 9.8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
       <button class="action-btn edit-btn" title="Edit">✎</button>
       <button class="action-btn delete delete-btn" title="Delete">✕</button>
     </div>`;
 
-  // Toggle on tap (not on buttons)
   el.addEventListener('click', e => {
     if (e.target.closest('.task-actions') || e.target.tagName === 'INPUT') return;
     toggleDone(t.id, e, el);
+  });
+
+  el.querySelector('.reset-day').addEventListener('click', e => {
+    e.stopPropagation();
+    const task = tasks.find(x => x.id === t.id);
+    if (!task) return;
+    task.autoReset = !task.autoReset;
+    save();
+
+    const btn = el.querySelector('.reset-day');
+    btn.classList.toggle('active', task.autoReset);
+    el.classList.toggle('auto-reset', task.autoReset);
+
+    // Small tooltip feedback
+    const prev = btn.title;
+    btn.title = task.autoReset ? 'Daily reset ON (resets at 12am IST)' : 'Daily reset OFF';
+    if (navigator.vibrate) navigator.vibrate(5);
   });
 
   el.querySelector('.edit-btn').addEventListener('click', e => {
@@ -1472,9 +1560,7 @@ function buildTask(t) {
     startTaskDrag(e, el);
   });
 
-  el.querySelector('.drag-handle').addEventListener('click', e => {
-    e.stopPropagation();
-  });
+  el.querySelector('.drag-handle').addEventListener('click', e => { e.stopPropagation(); });
 
   el.querySelector('.delete-btn').addEventListener('click', e => {
     e.stopPropagation();
@@ -1482,39 +1568,36 @@ function buildTask(t) {
     el.addEventListener('animationend', () => {
       tasks = tasks.filter(x => x.id !== t.id);
       save(); render();
-    }, {once:true});
+    }, { once: true });
   });
 
   return el;
 }
 
 function toggleDone(id, e, el) {
-  const task = tasks.find(t=>t.id===id);
+  const task = tasks.find(t => t.id === id);
   if (!task) return;
   task.done = !task.done;
   save();
 
-  // Ripple
   const rect = el.getBoundingClientRect();
   const clientX = e.touches ? e.touches[0].clientX : e.clientX;
   const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-  const rip  = document.createElement('span');
+  const rip = document.createElement('span');
   rip.className = 'ripple';
   const size = Math.max(rect.width, rect.height) * 1.5;
   rip.style.cssText = `width:${size}px;height:${size}px;left:${clientX-rect.left-size/2}px;top:${clientY-rect.top-size/2}px`;
   el.appendChild(rip);
-  rip.addEventListener('animationend', ()=>rip.remove());
+  rip.addEventListener('animationend', () => rip.remove());
 
   if (task.done) burst(clientX, clientY);
-
-  // Haptic if available
   if (navigator.vibrate) navigator.vibrate(task.done ? [8, 40, 8] : 5);
 
   render();
 }
 
 function startEdit(id, el) {
-  const task = tasks.find(t=>t.id===id);
+  const task = tasks.find(t => t.id === id);
   if (!task) return;
   const textEl = el.querySelector('.task-text');
   if (!textEl) return;
@@ -1524,7 +1607,6 @@ function startEdit(id, el) {
   input.autocapitalize = 'sentences';
   textEl.replaceWith(input);
   input.focus();
-  // Select all on mobile
   setTimeout(() => input.select(), 50);
 
   const finish = () => {
@@ -1541,7 +1623,7 @@ function startEdit(id, el) {
 
 function addTask(text) {
   if (!text.trim()) return;
-  tasks.unshift({ id: uid(), text: text.trim(), done: false });
+  tasks.unshift({ id: uid(), text: text.trim(), done: false, autoReset: false });
   save(); render();
   addInput.value = '';
   if (navigator.vibrate) navigator.vibrate(5);
@@ -1550,36 +1632,34 @@ function addTask(text) {
 function burst(cx, cy) {
   const wrap = document.createElement('div');
   wrap.className = 'burst';
-  wrap.style.left = cx+'px';
-  wrap.style.top  = cy+'px';
+  wrap.style.left = cx + 'px';
+  wrap.style.top  = cy + 'px';
   document.body.appendChild(wrap);
   const cols = ['#c8f565','#a8d84a','#e0ff90','#ffffff','#6fd44a'];
-  for (let i=0; i<14; i++) {
-    const dot   = document.createElement('div');
+  for (let i = 0; i < 14; i++) {
+    const dot = document.createElement('div');
     dot.className = 'burst-dot';
-    const angle = (i/14)*Math.PI*2;
-    const dist  = 35+Math.random()*45;
-    dot.style.setProperty('--tx', Math.cos(angle)*dist+'px');
-    dot.style.setProperty('--ty', Math.sin(angle)*dist+'px');
-    dot.style.setProperty('--d', (0.45+Math.random()*0.25)+'s');
-    dot.style.background = cols[i%cols.length];
-    dot.style.animationDelay = (Math.random()*0.08)+'s';
+    const angle = (i / 14) * Math.PI * 2;
+    const dist  = 35 + Math.random() * 45;
+    dot.style.setProperty('--tx', Math.cos(angle) * dist + 'px');
+    dot.style.setProperty('--ty', Math.sin(angle) * dist + 'px');
+    dot.style.setProperty('--d', (0.45 + Math.random() * 0.25) + 's');
+    dot.style.background = cols[i % cols.length];
+    dot.style.animationDelay = (Math.random() * 0.08) + 's';
     wrap.appendChild(dot);
   }
-  setTimeout(()=>wrap.remove(), 800);
+  setTimeout(() => wrap.remove(), 800);
 }
 
 function esc(s) {
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
-// ─── Events ───────────────────────────────────────────────────────────────────
-addBtn.addEventListener('click', ()=>addTask(addInput.value));
-addInput.addEventListener('keydown', e=>{ if(e.key==='Enter') addTask(addInput.value); });
-
-// Keep input visible above keyboard on iOS
+// ─── Add bar events ───────────────────────────────────────────────────────────
+addBtn.addEventListener('click', () => addTask(addInput.value));
+addInput.addEventListener('keydown', e => { if (e.key === 'Enter') addTask(addInput.value); });
 addInput.addEventListener('focus', () => {
-  setTimeout(() => addInput.scrollIntoView({ behavior:'smooth', block:'center' }), 350);
+  setTimeout(() => addInput.scrollIntoView({ behavior: 'smooth', block: 'center' }), 350);
 });
 
 // ─── PWA Install ──────────────────────────────────────────────────────────────
@@ -1590,13 +1670,10 @@ const dismissBanner = document.getElementById('dismissBanner');
 const iosBanner     = document.getElementById('iosBanner');
 const dismissIos    = document.getElementById('dismissIos');
 
-// Android / Chrome
 window.addEventListener('beforeinstallprompt', e => {
   e.preventDefault();
   deferredPrompt = e;
-  if (!localStorage.getItem('install-dismissed')) {
-    installBanner.style.display = '';
-  }
+  if (!localStorage.getItem('install-dismissed')) installBanner.style.display = '';
 });
 
 installBtn.addEventListener('click', async () => {
@@ -1612,13 +1689,11 @@ dismissBanner.addEventListener('click', () => {
   localStorage.setItem('install-dismissed', '1');
 });
 
-// iOS Safari
 const isIos = /iphone|ipad|ipod/i.test(navigator.userAgent);
 const isStandalone = window.navigator.standalone;
 if (isIos && !isStandalone && !localStorage.getItem('ios-dismissed')) {
   iosBanner.style.display = '';
 }
-
 dismissIos.addEventListener('click', () => {
   iosBanner.style.display = 'none';
   localStorage.setItem('ios-dismissed', '1');
@@ -1626,7 +1701,7 @@ dismissIos.addEventListener('click', () => {
 
 // ─── Service Worker ───────────────────────────────────────────────────────────
 if ('serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  navigator.serviceWorker.register('./sw.js').catch(() => {});
 }
 
 // ─── Init ─────────────────────────────────────────────────────────────────────
